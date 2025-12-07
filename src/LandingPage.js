@@ -51,9 +51,9 @@ export default function LandingPage() {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('cv', file);
-
+    console.log("formData",process.env.REACT_APP_BASE_URL);
     try {
-      const response = await fetch('http://localhost:5000/upload-cv', {
+      const response = await fetch(process.env.REACT_APP_BASE_URL, {
         method: 'POST',
         body: formData,
       });
