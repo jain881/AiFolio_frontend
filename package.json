@@ -1,6 +1,6 @@
 {
   "name": "my_portfolio",
-"homepage": "https://aifolio-frontend.onrender.com/",
+"homepage": ".",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
