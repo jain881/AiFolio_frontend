@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Sparkles, FileText, Zap, CheckCircle, ArrowRight } from 'lucide-react';
 import MainPage from './Portfolio/MainPage';
 
+
+
 export default function LandingPage() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -53,7 +55,7 @@ export default function LandingPage() {
     formData.append('cv', file);
     console.log("formData",process.env.REACT_APP_BASE_URL);
     try {
-      const response = await fetch(process.env.REACT_APP_BASE_URL, {
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL}/upload-cv`, {
         method: 'POST',
         body: formData,
       });

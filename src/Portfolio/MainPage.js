@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Mail,
@@ -16,18 +17,31 @@ import {
   Download,
 } from "lucide-react";
 import axios from "axios";
+const injectedData =
+  typeof window !== "undefined" ? window.__PORTFOLIO_DATA__ : null;
 
-function MainPage({ responseData }) {
-  const { extracted: data,cvUploaded:cvData } = responseData || {};
+const injectedTheme =
+  typeof window !== "undefined" ? window.__PORTFOLIO_THEME__ : "rainbow";
+
+ function MainPage({ responseData }) {
+    const finalData = responseData || injectedData;
+
+  const { extracted: data,cvUploaded:cvData } = finalData || {};
+
+    
   const [activeSection, setActiveSection] = useState("about");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
+
+  const [deploying,setDeploying]=useState(false);
+  const [deployUrl, setDeployUrl]=useState('');
+  const [deployError,setDeployError]=useState('');
   const [formStatus, setFormStatus] = useState("");
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [theme, setTheme] = useState("rainbow");
+const [theme, setTheme] = useState(injectedTheme || "rainbow");
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const canvasRef = useRef(null);
   const particlesRef = useRef([]);
@@ -160,6 +174,14 @@ function MainPage({ responseData }) {
     }
   }, [theme]);
 
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading portfolio...
+      </div>
+    );
+  }
+
   const getGradientColor = () => {
     if (theme === "none") {
       console.log("tee", theme);
@@ -202,13 +224,13 @@ function MainPage({ responseData }) {
   const experience = data?.experience?.length
     ? data.experience.map((job) => ({
         company: job.company,
-        title: job.role,
-        period: `${job.start_date} - ${job.end_date || "Present"}`,
+        title: job.title,
+        period: job.years,
         highlights: job.description
-          ? job.description
+          ? Array.isArray(job.description) ? job.description.map((point) => point.trim())
+              .filter((point) => point) : job.description.split("\n")
               
-              .map((point) => point.trim())
-              .filter((point) => point)
+              
           : [],
       }))
     : [];
@@ -248,11 +270,29 @@ function MainPage({ responseData }) {
   const awards = data?.awards?.length
     ? data.awards.map((award) => ({
         title: award.title,
-        company: award.company,
+        company: award.issuer,
         date: award.date,
       }))
     : [];
-console.log(cvData,"cv uploaded");
+
+    const deployPortfolio = async () => {
+      try{
+        setDeploying(true);
+        setDeployError('');
+        setDeployUrl('');
+        const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/deploy-portfolio`,{data:finalData,theme:theme});
+        setDeployUrl(res.data.deployUrl);
+      }catch(err){  
+        setDeployError('Deployment failed. Please try again.');
+      }finally{
+        setDeploying(false);
+        
+
+
+      }
+    }
+
+
   return (
     <div className="App">
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-100 relative">
@@ -430,6 +470,37 @@ console.log(cvData,"cv uploaded");
                 </div>
               </div>
             </div>
+
+            {!injectedData && (
+              <div className="flex items-start gap-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all hover:scale-105">
+                <button
+                  onClick={deployPortfolio}
+                  disabled={deploying}
+                  className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 disabled:opacity-50 mb-4"
+                  style={{
+                    background: `linear-gradient(135deg, ${getGradientColor()}, ${getGradientColor()}cc)`,
+                    boxShadow: `0 0 30px ${getGradientColor()}40`,
+                  }}
+                >
+                  {deploying ? "Deploying..." : "🚀 Deploy Portfolio"}
+                </button>
+
+                {deployUrl && (
+                  <a
+                    href={deployUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full px-6 py-3 rounded-xl font-semibold bg-green-600 text-white hover:scale-105 transition-all text-center"
+                  >
+                    ✅ View Live Portfolio
+                  </a>
+                )}
+
+                {deployError && (
+                  <p className="text-red-400 mt-4 text-center">{deployError}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-4 justify-center mt-auto">
                 {
@@ -808,6 +879,7 @@ profileData.github && (
                       </a>
                     </div>
                   </div>
+                  
 
                   {/* <div className="bg-gray-800/40 backdrop-blur-sm p-10 rounded-2xl border border-gray-700/50">
                     <div className="space-y-6">
@@ -890,34 +962,6 @@ profileData.github && (
           </main>
         </div>
 
-        <style jsx>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.6s ease-out;
-          }
-          @keyframes slideUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-slideUp {
-            animation: slideUp 0.3s ease-out;
-          }
-        `}</style>
       </div>
     </div>
   );
