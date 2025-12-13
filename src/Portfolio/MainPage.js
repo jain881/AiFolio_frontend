@@ -199,7 +199,6 @@ function MainPage({ responseData }) {
     Security: data?.skills?.Authentication || [],
     "AI/Tools": data?.skills?.["AI / Tools"] || [],
   };
-
   const experience = data?.experience?.length
     ? data.experience.map((job) => ({
         company: job.company,
@@ -207,7 +206,7 @@ function MainPage({ responseData }) {
         period: `${job.start_date} - ${job.end_date || "Present"}`,
         highlights: job.description
           ? job.description
-              .split(". ")
+              
               .map((point) => point.trim())
               .filter((point) => point)
           : [],
