@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Mail,
@@ -23,12 +22,11 @@ const injectedData =
 const injectedTheme =
   typeof window !== "undefined" ? window.__PORTFOLIO_THEME__ : "rainbow";
 
- function MainPage({ responseData }) {
-    const finalData = responseData || injectedData;
+function MainPage({ responseData }) {
+  const finalData = responseData || injectedData;
 
-  const { extracted: data,cvUploaded:cvData } = finalData || {};
+  const { extracted: data, cvUploaded: cvData } = finalData || {};
 
-    
   const [activeSection, setActiveSection] = useState("about");
   const [formData, setFormData] = useState({
     name: "",
@@ -36,12 +34,15 @@ const injectedTheme =
     message: "",
   });
 
-  const [deploying,setDeploying]=useState(false);
-  const [deployUrl, setDeployUrl]=useState('');
-  const [deployError,setDeployError]=useState('');
+  const [deploying, setDeploying] = useState(false);
+  const [deployUrl, setDeployUrl] = useState("");
+  const [deployError, setDeployError] = useState("");
+  const [isExisting, setIsExisting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [formStatus, setFormStatus] = useState("");
   const [scrollProgress, setScrollProgress] = useState(0);
-const [theme, setTheme] = useState(injectedTheme || "rainbow");
+  const [theme, setTheme] = useState(injectedTheme || "rainbow");
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const canvasRef = useRef(null);
   const particlesRef = useRef([]);
@@ -227,10 +228,11 @@ const [theme, setTheme] = useState(injectedTheme || "rainbow");
         title: job.title,
         period: job.years,
         highlights: job.description
-          ? Array.isArray(job.description) ? job.description.map((point) => point.trim())
-              .filter((point) => point) : job.description.split("\n")
-              
-              
+          ? Array.isArray(job.description)
+            ? job.description
+                .map((point) => point.trim())
+                .filter((point) => point)
+            : job.description.split("\n")
           : [],
       }))
     : [];
@@ -275,27 +277,88 @@ const [theme, setTheme] = useState(injectedTheme || "rainbow");
       }))
     : [];
 
-    const deployPortfolio = async () => {
-      try{
-        setDeploying(true);
-        setDeployError('');
-        setDeployUrl('');
-        const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/deploy-portfolio`,{data:finalData,theme:theme});
+  const deployPortfolio = async () => {
+    try {
+      setDeploying(true);
+      setDeployError("");
+      setDeployUrl("");
+      setIsExisting(false);
+      setShowToast(false);
+
+      const res = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/deploy-portfolio`,
+        { data: finalData, theme: theme }
+      );
+
+      if (res.data.isExisting) {
+        setIsExisting(true);
         setDeployUrl(res.data.deployUrl);
-      }catch(err){  
-        setDeployError('Deployment failed. Please try again.');
-      }finally{
+        setToastMessage(
+          res.data.message || "Portfolio already exists for this email!"
+        );
+        setShowToast(true);
+
+        // Hide toast after 5 seconds
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
+
         setDeploying(false);
-        
-
-
+        return;
       }
-    }
 
+      setDeployUrl(res.data.deployUrl);
+      setIsExisting(false);
+    } catch (err) {
+      setDeployError("Deployment failed. Please try again.");
+      setIsExisting(false);
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  // Toast Component
+  const Toast = ({ message, show, onClose }) => {
+    useEffect(() => {
+      if (show) {
+        const timer = setTimeout(() => {
+          onClose();
+        }, 5000);
+        return () => clearTimeout(timer);
+      }
+    }, [show, onClose]);
+
+    if (!show) return null;
+
+    return (
+      <div
+        className="fixed top-4 right-4 z-50 bg-yellow-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-md animate-slide-in"
+        style={{
+          animation: "slideIn 0.3s ease-out",
+        }}
+      >
+        <span className="text-xl">⚠️</span>
+        <p className="flex-1">{message}</p>
+        <button
+          onClick={onClose}
+          className="text-white hover:text-gray-200 font-bold text-xl ml-2"
+        >
+          ×
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="App">
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-100 relative">
+        {/* Toast Notification */}
+        <Toast
+          message={toastMessage}
+          show={showToast}
+          onClose={() => setShowToast(false)}
+        />
+
         {/* Cursor Trail Canvas */}
         <canvas
           ref={canvasRef}
@@ -472,63 +535,70 @@ const [theme, setTheme] = useState(injectedTheme || "rainbow");
             </div>
 
             {!injectedData && (
-              <div className="flex items-start gap-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all hover:scale-105">
-                <button
-                  onClick={deployPortfolio}
-                  disabled={deploying}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 disabled:opacity-50 mb-4"
-                  style={{
-                    background: `linear-gradient(135deg, ${getGradientColor()}, ${getGradientColor()}cc)`,
-                    boxShadow: `0 0 30px ${getGradientColor()}40`,
-                  }}
-                >
-                  {deploying ? "Deploying..." : "🚀 Deploy Portfolio"}
-                </button>
+              <div className="flex flex-col items-start gap-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all hover:scale-105">
+                {/* Deploy Button - Hide if already deployed or if existing */}
+                {!deployUrl && !isExisting && (
+                  <button
+                    onClick={deployPortfolio}
+                    disabled={deploying}
+                    className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 disabled:opacity-50 mb-4"
+                    style={{
+                      background: `linear-gradient(135deg, ${getGradientColor()}, ${getGradientColor()}cc)`,
+                      boxShadow: `0 0 30px ${getGradientColor()}40`,
+                    }}
+                  >
+                    {deploying ? "Deploying..." : "🚀 Deploy Portfolio"}
+                  </button>
+                )}
 
-                {deployUrl && (
+                {/* View Portfolio Button - Hide if existing portfolio */}
+                {deployUrl && !isExisting && (
                   <a
                     href={deployUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full px-6 py-3 rounded-xl font-semibold bg-green-600 text-white hover:scale-105 transition-all text-center"
+                    className="block w-full px-6 py-3 rounded-xl font-semibold bg-green-600 text-white hover:scale-105 transition-all text-center mb-4"
                   >
                     ✅ View Live Portfolio
                   </a>
                 )}
 
+                {/* Show message if existing portfolio */}
+                {isExisting && (
+                  <div className="w-full px-6 py-3 rounded-xl font-semibold bg-yellow-600 text-white text-center mb-4">
+                    ⚠️ Portfolio Already Exists
+                  </div>
+                )}
+
                 {deployError && (
-                  <p className="text-red-400 mt-4 text-center">{deployError}</p>
+                  <p className="text-red-400 mt-4 text-center w-full">
+                    {deployError}
+                  </p>
                 )}
               </div>
             )}
 
             <div className="flex gap-4 justify-center mt-auto">
-                {
-profileData.linkedin && (
-<a
-                href={profileData.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-700/50 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-)
-                }
-                {
-profileData.github && (
-     <a
-                href={profileData.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-700/50 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-)
-                }
-              
-             
+              {profileData.linkedin && (
+                <a
+                  href={profileData.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-gray-700/50 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
+                >
+                  <Linkedin className="w-5 h-5" />
+                </a>
+              )}
+              {profileData.github && (
+                <a
+                  href={profileData.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-gray-700/50 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
+                >
+                  <Github className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </aside>
 
@@ -879,7 +949,6 @@ profileData.github && (
                       </a>
                     </div>
                   </div>
-                  
 
                   {/* <div className="bg-gray-800/40 backdrop-blur-sm p-10 rounded-2xl border border-gray-700/50">
                     <div className="space-y-6">
@@ -961,7 +1030,6 @@ profileData.github && (
             </div>
           </main>
         </div>
-
       </div>
     </div>
   );
