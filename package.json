@@ -1,6 +1,6 @@
 {
   "name": "my_portfolio",
-"homepage": "https://ai-folio-frontend.vercel.app/",
+"homepage": "https://aifolio-frontend.onrender.com/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
