@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Sparkles, FileText, Zap, CheckCircle, ArrowRight } from 'lucide-react';
 import MainPage from './Portfolio/MainPage';
-
+import { superbase } from './superbase';
 
 
 export default function LandingPage() {
@@ -55,6 +55,15 @@ export default function LandingPage() {
     formData.append('cv', file);
     console.log("formData",process.env.REACT_APP_BASE_URL);
     try {
+      const session = await superbase.auth.getSession();
+      if (!session.data.session) {
+        alert('User not authenticated Please log in first.');
+        setIsUploading(false);
+        return;
+      }
+      else{
+        setIsUploading(true);
+        
       const response = await fetch(`${process.env.REACT_APP_BASE_URL}/upload-cv`, {
         method: 'POST',
         body: formData,
@@ -70,6 +79,7 @@ export default function LandingPage() {
           setFile(null);
         }, 3000);
       }
+    }
     } catch (error) {
       console.error('Upload error:', error);
     } finally {
@@ -79,6 +89,14 @@ export default function LandingPage() {
 
   const gradientX = (mousePosition.x / window.innerWidth) * 100;
   const gradientY = (mousePosition.y / window.innerHeight) * 100;
+
+  const loginWithGoogle = async () => {
+   
+    const { error } = await superbase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) console.error('Error during Google sign-in:', error.message);
+  }
 
   return (
     <>
@@ -132,6 +150,9 @@ export default function LandingPage() {
 
             <div className="relative z-10 container mx-auto px-4 py-12">
               {/* Header */}
+                <button onClick={loginWithGoogle} className='float-right flex justify-end bg-white p-4 border rounded-full mb-8 hover:bg-purple-100/80 transition weight font-medium text-purple-600 shadow-lg shadow-purple-500/20 mx-4 my-4'>
+                  Sign in with Google
+                </button>
               <div className="text-center mb-16 pt-8">
                 <div className="inline-flex items-center gap-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 rounded-full px-6 py-2 mb-6">
                   <Sparkles className="w-4 h-4 text-purple-300" />
