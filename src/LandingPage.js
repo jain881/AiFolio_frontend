@@ -165,7 +165,6 @@ export default function LandingPage() {
                     Career Journey
                   </span>
                 </h1>
-
                 <p className="text-xl text-purple-200 max-w-2xl mx-auto leading-relaxed">
                   Upload your CV and let our advanced AI analyze, optimize, and unlock your professional potential in seconds
                 </p>

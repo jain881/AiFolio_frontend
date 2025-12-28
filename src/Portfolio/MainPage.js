@@ -211,6 +211,7 @@ function MainPage({ responseData }) {
     linkedin: data?.linkedin || "",
     resumeUrl: "Vyakhya_Mishra_Backend_Developer.pdf",
     summary: data?.professional_summary || "No professional summary found.",
+    education: data?.education || [],
   };
 
   const skills = {
@@ -274,6 +275,14 @@ function MainPage({ responseData }) {
         title: award.title,
         company: award.issuer,
         date: award.date,
+      }))
+    : [];
+
+    const education = data?.education?.length
+    ? data.education.map((edu) => ({
+        institution: edu.institution,
+        degree: edu.degree,
+        field_of_study: edu.field_of_study,
       }))
     : [];
 
@@ -743,30 +752,37 @@ function MainPage({ responseData }) {
                       }}
                     ></div>
                   </div>
+                  {education.length > 0 && (
+  <div>
+    <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
+      <GraduationCap
+        className="w-8 h-8"
+        style={{ color: getGradientColor() }}
+      />
+      Education
+    </h3>
 
-                  <div>
-                    <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                      <GraduationCap
-                        className="w-8 h-8"
-                        style={{ color: getGradientColor() }}
-                      />
-                      Education
-                    </h3>
-                    <div className="bg-gray-800/40 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50">
-                      <h4 className="text-2xl font-semibold mb-2">
-                        Bachelor of Engineering (B.E.)
-                      </h4>
-                      <p
-                        className="text-lg mb-2"
-                        style={{ color: getGradientColor() }}
-                      >
-                        Computer Science and Engineering
-                      </p>
-                      <p className="text-gray-400">
-                        2011 - 2015 • CGPA: 7.8/10
-                      </p>
-                    </div>
-                  </div>
+    {education.map((edu, idx) => (
+      <div
+        key={idx}
+        className="bg-gray-800/40 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 mb-4"
+      >
+        <h4 className="text-2xl font-semibold mb-2">
+          {edu.institution || "No Institution Found"}
+        </h4>
+        <p className="text-lg mb-2" style={{ color: getGradientColor() }}>
+          {edu.degree || "No Degree Found"}
+        </p>
+        <p className="text-gray-400">
+          {edu.startYear || "N/A"} - {edu.endYear || "N/A"} • CGPA:{" "}
+          {edu.cgpa || "N/A"}
+        </p>
+      </div>
+    ))}
+  </div>
+)}
+
+                 
 
                   <div>
                     <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
