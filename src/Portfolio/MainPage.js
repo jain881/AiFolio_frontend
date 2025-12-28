@@ -752,7 +752,7 @@ function MainPage({ responseData }) {
                       }}
                     ></div>
                   </div>
-                  {education.length > 0 && (
+                   {education.length > 0 && (
   <div>
     <h3 className="text-3xl font-bold mb-8 flex items-center gap-3">
       <GraduationCap
@@ -764,7 +764,7 @@ function MainPage({ responseData }) {
 
     {education.map((edu, idx) => (
       <div
-        key={idx}
+        key={idx} // Add a unique key
         className="bg-gray-800/40 backdrop-blur-sm p-8 rounded-2xl border border-gray-700/50 mb-4"
       >
         <h4 className="text-2xl font-semibold mb-2">
@@ -774,8 +774,10 @@ function MainPage({ responseData }) {
           {edu.degree || "No Degree Found"}
         </p>
         <p className="text-gray-400">
-          {edu.startYear || "N/A"} - {edu.endYear || "N/A"} • CGPA:{" "}
-          {edu.cgpa || "N/A"}
+          {edu.field_of_study || "No Field of Study Found"}
+        </p>
+        <p className="text-gray-400">
+          {edu.start_year} - {edu.end_year} • CGPA: {edu.cgpa || "N/A"}
         </p>
       </div>
     ))}
