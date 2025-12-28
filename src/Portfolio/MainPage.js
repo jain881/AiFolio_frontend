@@ -283,6 +283,9 @@ function MainPage({ responseData }) {
         institution: edu.institution,
         degree: edu.degree,
         field_of_study: edu.field_of_study,
+        cgpa: edu.cgpa,
+        start_year: edu.start_year,
+        end_year: edu.end_year,
       }))
     : [];
 
