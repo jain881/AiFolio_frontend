@@ -1,20 +1,8 @@
-
 import "./App.css";
-import LandingPage from "./LandingPage";
-import MainPage from "./Portfolio/MainPage";
-
-const injectedData = window.__PORTFOLIO_DATA__ || null;
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  if (injectedData) {
-    return <MainPage responseData={injectedData} />;
-  }
-  
-  return (
-    <div className="App">
-      <LandingPage />
-    </div>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
